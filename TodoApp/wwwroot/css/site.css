@@ -1,0 +1,34 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+#list1 .form-control {
+    border-color: transparent;
+}
+
+    #list1 .form-control:focus {
+        border-color: transparent;
+        box-shadow: none;
+    }
+
+#list1 .select-input.form-control[readonly]:not([disabled]) {
+    background-color: #fbfbfb;
+}
+
+.no-border {
+    border: 0 !important;
+}
