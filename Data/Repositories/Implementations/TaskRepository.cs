@@ -1,5 +1,6 @@
 ﻿using Data.Repositories.Abstractions;
 using Data.ViewModel;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -13,158 +14,67 @@ namespace Data.Repositories.Implementations
 {
     public class TaskRepository : ITaskRepository
     {
-        private readonly string _conString;
+        private readonly AppDbContext _context;
 
-        public TaskRepository(IConfiguration config)
+        public TaskRepository(AppDbContext context)
         {
-            _conString = config.GetConnectionString("DefaultConnection");
+            _context = context;
 
         }
-        public async Task CreateTask(TaskViewModel task)
+
+        public async Task<Models.Task> CreateTask(Models.Task task)
         {
             task.Date = DateTime.Now;
-            using(SqlConnection con = new SqlConnection(_conString))
-            {
-                var command = "INSERT INTO Tasks VALUES (@task, @date)";
-  
-                SqlCommand cmd = new SqlCommand(command, con);
-                cmd.Parameters.AddWithValue("@task", task.TodoTask);
-                cmd.Parameters.AddWithValue("@date", task.Date);
-                con.Open();
-                await cmd.ExecuteNonQueryAsync();
-                con.Close();
-            }
+            var res = _context.Tasks.Add(task);
+            await _context.SaveChangesAsync();
+
+            return res.Entity;
         }
 
         public async Task DeleteMultpleTasks(List<int> ids)
         {
-            var tvp = new DataTable();
-            tvp.Columns.Add("Id", typeof(int));
+            var entities = await _context.Tasks.Where(x => ids.Contains(x.Id)).ToListAsync();
 
-            foreach (var id in ids)
-                tvp.Rows.Add(id);
+            _context.Tasks.RemoveRange(entities);
 
-            using (var conn = new SqlConnection(_conString))
-            {
-                var  cmd = new SqlCommand("deleteSelected", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-
-                cmd
-                  .Parameters
-                  .AddWithValue("@ids", tvp)
-                  .SqlDbType = SqlDbType.Structured;
-                conn.Open();
-                await cmd.ExecuteNonQueryAsync();
-                conn.Close();
-            }
-
-            
+            await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteTaskById(int id)
+        public async Task<Models.Task> DeleteTaskById(int id)
         {
-         
-            using (SqlConnection con = new SqlConnection(_conString))
-            {
-                var command = "DELETE FROM Tasks WHERE Id=@id";
-
-                SqlCommand cmd = new SqlCommand(command, con);
-                cmd.Parameters.AddWithValue("@id", id);
-                con.Open();
-                await cmd.ExecuteNonQueryAsync();
-                con.Close();
-            }
+            var entity = _context.Tasks.Find(id);
+            var res = _context.Tasks.Remove(entity);
+            await _context.SaveChangesAsync();
+            return res.Entity;
         }
 
-        public async Task EditTask(TaskViewModel task)
+        public async Task EditTask(Models.Task task)
         {
-            using (SqlConnection con = new SqlConnection(_conString))
-            {
-                var command = "UPDATE Tasks SET Task=@task WHERE Id=@id";
-
-                SqlCommand cmd = new SqlCommand(command, con);
-                cmd.Parameters.AddWithValue("@task", task.TodoTask);
-                cmd.Parameters.AddWithValue("@id", task.Id);
-                con.Open();
-                await cmd.ExecuteNonQueryAsync();
-                con.Close();
-            }
+            _context.Entry(task).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+           
         }
 
-        public async Task<List<TaskViewModel>> FindByDate(DateTime date)
+        public async Task<List<Models.Task>> FindByDate(DateTime date)
         {
-            SqlCommand cmd = new SqlCommand();
-            //select * from test where cast ([date] as date) = '03/19/2014';
-            cmd.CommandText = "SELECT * FROM Tasks WHERE cast([DateCreated] as date) = @param";
-            cmd.Parameters.AddWithValue("@param",date.Date);
-            return await GetTasks(cmd);
+            var res = await _context.Tasks.Where(t => t.Date.Date == date.Date).ToListAsync();
+            return res;
         }
 
-        public async Task<List<TaskViewModel>> FindTasks(string searchWord)
+        public async Task<List<Models.Task>> FindTasks(string searchWord)
         {
-            SqlCommand cmd = new SqlCommand();
-            cmd.CommandText = "SELECT * FROM Tasks WHERE Task LIKE @param";
-            cmd.Parameters.AddWithValue("@param","%" + searchWord + "%");
-            return await GetTasks(cmd);
-
-
+            var res = await _context.Tasks.Where(t => t.TodoTask.Contains(searchWord)).ToListAsync();
+            return res;
         }
 
-        public async Task<List<TaskViewModel>> GetAllTasks()
+        public async Task<List<Models.Task>> GetAllTasks()
         {
-            SqlCommand cmd = new SqlCommand();
-            cmd.CommandText = "SELECT * FROM Tasks";
-            return await GetTasks(cmd);
+            return await _context.Tasks.ToListAsync();
         }
 
-        public async Task<TaskViewModel> GetTaskById(int id)
+        public async Task<Models.Task> GetTaskById(int id)
         {
-            TaskViewModel task = new TaskViewModel();
-            using (SqlConnection con = new SqlConnection(_conString))
-            {
-                var command = "SELECT * FROM Tasks WHERE Id=@id";
-
-                SqlCommand cmd = new SqlCommand(command, con);
-                cmd.Parameters.AddWithValue("@id", id);
-                con.Open();
-                var res = await cmd.ExecuteReaderAsync();
-               if(res.HasRows)
-                {
-                    res.Read();
-                    task.TodoTask = res["Task"].ToString();
-                    task.Date = (DateTime)res["DateCreated"];
-                    task.Id = Convert.ToInt32(res["Id"]);
-                }
-                
-                con.Close();
-            }
-            return task;
-        }
-        private async Task<List<TaskViewModel>> GetTasks(SqlCommand cmd)
-        {
-            List<TaskViewModel> tasks = new List<TaskViewModel>();
-            using (SqlConnection con = new SqlConnection(_conString))
-            {
-                cmd.Connection = con;
-                con.Open();
-                var res = await cmd.ExecuteReaderAsync();
-                if (res.HasRows)
-                {
-                    while (res.Read())
-                    {
-                        tasks.Add(new TaskViewModel()
-                        {
-                            Id = Convert.ToInt32(res["Id"]),
-                            TodoTask = res["Task"].ToString(),
-                            Date = (DateTime)res["DateCreated"]
-                        });
-                    }
-                }
-                con.Close();
-            }
-            return tasks;
+            return await _context.Tasks.FirstOrDefaultAsync(x => x.Id == id);
         }
     }
 }

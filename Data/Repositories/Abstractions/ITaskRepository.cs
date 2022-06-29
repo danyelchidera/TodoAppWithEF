@@ -5,13 +5,13 @@ namespace Data.Repositories.Abstractions
 {
     public interface ITaskRepository
     {
-        Task CreateTask(TaskViewModel task);
-        Task DeleteTaskById(int id);
-        Task<List<TaskViewModel>> GetAllTasks();
-        Task<TaskViewModel> GetTaskById(int id);
-        Task EditTask(TaskViewModel task);
-        Task<List<TaskViewModel>> FindTasks(string searchWord);
-        Task<List<TaskViewModel>> FindByDate(DateTime date);
+        Task<Models.Task> CreateTask(Models.Task task);
+        Task<Models.Task> DeleteTaskById(int id);
+        Task<List<Models.Task>> GetAllTasks();
+        Task<Models.Task> GetTaskById(int id);
+        Task EditTask(Models.Task task);
+        Task<List<Models.Task>> FindTasks(string searchWord);
+        Task<List<Models.Task>> FindByDate(DateTime date);
         Task DeleteMultpleTasks(List<int> ids);
     }
 }

@@ -8,6 +8,10 @@ namespace Data.Models
 {
     public class Task
     {
+        public Task()
+        {
+
+        }
         public int Id { get; set; }
         public String TodoTask { get; set; }
         public DateTime Date { get; set; }
