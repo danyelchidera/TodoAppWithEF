@@ -8,6 +8,10 @@ namespace Data.ViewModel
 {
     public class TaskViewModel
     {
+        public TaskViewModel()
+        {
+
+        }
         public int Id { get; set; }
         public string TodoTask { get; set; }
         public DateTime Date { get; set; }

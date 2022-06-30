@@ -1,21 +1,24 @@
-﻿using Data.Repositories.Abstractions;
+﻿using AutoMapper;
+using Data.Repositories.Abstractions;
 using Data.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using TodoApp.Services;
 
 namespace TodoApp.Pages
 {
     [BindProperties(SupportsGet = true)]
     public class IndexModel : PageModel
     {
-        private readonly ITaskRepository _repo;
+       
+        private readonly ITaskService _service;
         public TaskViewModel Task { get; set; }
         public string SearchQuery { get; set; }
         public DateTime Date { get; set; } = DateTime.Now.Date;
 
-        public IndexModel(ITaskRepository repo)
+        public IndexModel(ITaskService service)
         {
-            _repo = repo;
+            _service = service;
         }
         
         public IList<TaskViewModel> Tasks { get; set; }
@@ -24,11 +27,11 @@ namespace TodoApp.Pages
         {
             if(string.IsNullOrEmpty(SearchQuery))
             {
-                Tasks = await _repo.GetAllTasks();
+                Tasks = await _service.GetAllTasks();
             }
             else
             {
-                Tasks = await _repo.FindTasks(SearchQuery);
+                Tasks = await _service.FindTasks(SearchQuery);
             }
             
            
@@ -37,8 +40,7 @@ namespace TodoApp.Pages
 
         public async Task<IActionResult> OnPostSearchByDate()
         {
-            
-            Tasks = await _repo.FindByDate(Date);
+            Tasks = await _service.FindByDate(Date);
             return Page();
         }
 
@@ -46,7 +48,7 @@ namespace TodoApp.Pages
         {
             if(!string.IsNullOrEmpty(Task.TodoTask))
             {
-                await _repo.CreateTask(Task);
+                await _service.CreateTask(Task);
             }
             
             Task = new TaskViewModel();
@@ -56,7 +58,7 @@ namespace TodoApp.Pages
 
         public async Task<IActionResult> OnPostDelete(int id)
         {
-            await _repo.DeleteTaskById(id);
+            await _service.DeleteTaskById(id);
 
             return RedirectToPage("Index");
         }
@@ -69,7 +71,7 @@ namespace TodoApp.Pages
                 if(task.Check)
                     ids.Add(task.Id);
             }
-            await _repo.DeleteMultpleTasks(ids);
+            await _service.DeleteMultpleTasks(ids);
             return RedirectToPage("Index");
         }
 
