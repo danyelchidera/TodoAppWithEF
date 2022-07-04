@@ -52,7 +52,6 @@ namespace Data.Repositories.Implementations
         {
             _context.Entry(task).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-           
         }
 
         public async Task<List<Models.Task>> FindByDate(DateTime date)

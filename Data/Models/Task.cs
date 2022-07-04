@@ -12,8 +12,12 @@ namespace Data.Models
         {
 
         }
+        public Task(string task)
+        {
+            TodoTask = task;
+        }
         public int Id { get; set; }
-        public String TodoTask { get; set; }
+        public string TodoTask { get; set; }
         public DateTime Date { get; set; }
     }
 }
