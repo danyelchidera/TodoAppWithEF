@@ -10,10 +10,31 @@ namespace Tests
 {
     public class Tests
     {
+        private DbContextOptionsBuilder<AppDbContext> builder;
+
+        [SetUp]
+        public void Setup()
+        {
+            // Create a fresh service provider, and therefore a fresh 
+            // InMemory database instance.
+            var serviceProvider = new ServiceCollection()
+                .AddEntityFrameworkInMemoryDatabase()
+                .BuildServiceProvider();
+
+            // Create a new options instance telling the context to use an
+            // InMemory database and the new service provider.
+            this.builder = new DbContextOptionsBuilder<AppDbContext>();
+            this.builder.UseInMemoryDatabase("Test")
+                   .UseInternalServiceProvider(serviceProvider);
+
+            
+        }
+
+
         [Test]
         public async Task CreateTaskShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 Data.Models.Task task = new Data.Models.Task("1");
 
@@ -29,7 +50,7 @@ namespace Tests
         [Test]
         public async Task DeleteTaskShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 context.Tasks.Add(new Data.Models.Task("1"));
                 context.Tasks.Add(new Data.Models.Task("2"));
@@ -47,7 +68,7 @@ namespace Tests
         [Test]
         public async Task GetAllTasksShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 context.Tasks.Add(new Data.Models.Task("1"));
                 context.Tasks.Add(new Data.Models.Task("2"));
@@ -64,7 +85,7 @@ namespace Tests
         [Test]
         public async Task SearchShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 context.Tasks.Add(new Data.Models.Task("14"));
                 context.Tasks.Add(new Data.Models.Task("32"));
@@ -83,7 +104,7 @@ namespace Tests
         [Test]
         public async Task DeleteMultpleTaskShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 context.Tasks.Add(new Data.Models.Task("14"));
                 context.Tasks.Add(new Data.Models.Task("32"));
@@ -105,7 +126,7 @@ namespace Tests
         [Test]
         public async Task DeletesOnlyIdsInDb()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 context.Tasks.Add(new Data.Models.Task("14"));
                 context.Tasks.Add(new Data.Models.Task("32"));
@@ -127,7 +148,7 @@ namespace Tests
         [Test]
         public async Task EditTaskShould()
         {
-            using (var context = new AppDbContext(CreateNewContextOptions()))
+            using (var context = new AppDbContext(builder.Options))
             {
                 var task = new Data.Models.Task("14");
                 context.Tasks.Add(task);
@@ -144,23 +165,5 @@ namespace Tests
                 Assert.AreEqual(testTask.TodoTask, "15");
             }
         }
-
-        private static DbContextOptions<AppDbContext> CreateNewContextOptions()
-        {
-            // Create a fresh service provider, and therefore a fresh 
-            // InMemory database instance.
-            var serviceProvider = new ServiceCollection()
-                .AddEntityFrameworkInMemoryDatabase()
-                .BuildServiceProvider();
-
-            // Create a new options instance telling the context to use an
-            // InMemory database and the new service provider.
-            var builder = new DbContextOptionsBuilder<AppDbContext>();
-            builder.UseInMemoryDatabase("Test")
-                   .UseInternalServiceProvider(serviceProvider);
-
-            return builder.Options;
-        }
-
     }
 }
